@@ -16,6 +16,8 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 COPY . /code/
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8000
 
