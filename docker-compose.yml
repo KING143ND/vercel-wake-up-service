@@ -5,13 +5,20 @@ services:
     build: .
     command: ["entrypoint.sh"]
     volumes:
-      - .:/code
+      - .:/app
     ports:
       - "8000:8000"
     depends_on:
       - redis
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
 
   redis:
     image: redis:alpine
@@ -22,20 +29,24 @@ services:
     build: .
     command: celery -A vercel_wake_up_service worker --loglevel=info
     volumes:
-      - .:/code
+      - .:/app
     depends_on:
       - django
       - redis
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: always
 
   celery_beat:
     build: .
     command: celery -A vercel_wake_up_service beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
-      - .:/code
+      - .:/app
     depends_on:
       - django
       - redis
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: always
